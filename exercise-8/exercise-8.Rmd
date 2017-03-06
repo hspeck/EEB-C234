@@ -1,0 +1,421 @@
+---
+title: "EEB177-exercise_8"
+output: markdown
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploring the Cocoli Dataset
+```{r}
+cocoli_dat <- read.table("/home/eeb177-student/Desktop/eeb-177/class-assignments/classwork-21-Feb/cocoli.txt", header =TRUE)
+
+str(cocoli_dat)
+dim(cocoli_dat)
+head(cocoli_dat)
+```
+
+```{r}
+
+sizes_in_1994 <- cocoli_dat$dbh1
+names(sizes_in_1994)<- cocoli_dat$tag
+sizes_in_1994[1:10]
+```
+
+```{r}
+sizes_in_1997 <-cocoli_dat$dbh2
+names(sizes_in_1994) <- cocoli_dat$tag
+
+sizes_in_1998 <- cocoli_dat$dbh3
+names(sizes_in_1994) <-cocoli_dat$tag
+```
+
+```{r}
+#find all instaances fo dbh = 171
+sizes_in_1994 == 171
+
+which(sizes_in_1994 == 171)
+
+#Let's track fate of trees began 1994 with db 171
+trees_171_1994 <- which(sizes_in_1994  == 177)
+trees_171_1994
+
+sizes_in_1997[trees_171_1994]
+
+#Calc Relative Growth Rate between 1997 and 1994
+yearly_RGR_1 = ((cocoli_dat$dbh2 -cocoli_dat$db1)/cocoli_dat$dbh1)/3
+
+#cocoli_dat$rgr1 <- yearly_RGR_1
+#this command doesn't let me add to the dataframe
+
+```
+
+
+## Plots
+
+```{r}
+#make histograms with hsit()
+#barplots with barplot()
+#boxplot with boxplot()
+# scatterplot with l=plot
+
+hist(cocoli_dat$dbh1, xlim = c(0,2000), xlab="DBH in 1994 (mm)", main ="Distribution of sizes in 1994", col="red")
+
+help(hist)
+```
+
+## Packages
+```{r}
+library(ggplot2)
+ggplot(cocoli_dat) + geom_histogram(aes(dbh1), fill ="blue", alpha =0.2) + geom_histogram(aes(dbh2), fill = "red", alpha= 0.2) + ggtitle("Distribution of sizes in 1994")
+```
+
+
+## In Class assignments
+
+```{r}
+housing <- read.csv("Rgraphics/dataSets/landdata-states.csv")
+head(housing[1:5])
+```
+```{r}
+hist(housing$Home.Value)
+#just charts a histogram
+```
+
+```{r}
+library(ggplot2)
+ggplot(housing, aes(x = Home.Value)) + #specifies the data, and the x axis
+  geom_histogram()
+#then just says to make a histogram
+```
+
+
+```{r}
+plot(Home.Value ~ Date,
+     data=subset(housing, State == "MA"))
+#yasy plot a subset of data, for Mass
+points(Home.Value ~ Date, col="red",
+       data=subset(housing, State == "TX"))
+#says put points on existing graph from subset of points from Texas
+legend(1975, 400000,
+       c("MA", "TX"), title="State",
+       col=c("black", "red"),
+       pch=c(1, 1))
+#says make a legend with title "State", and the colors black is MA, red is TX
+```
+
+```{r}
+ggplot(subset(housing, State %in% c("MA", "TX")),
+       aes(x=Date,
+           y=Home.Value,
+           color=State))+
+  #wants a plot using the subset of data from housing, with MA and TX, x axis as date, y value as home value, automatically assigning color by state
+  geom_point()
+#want to plot by points?
+```
+
+## Points (Scatterplot)
+```{r}
+hp2001Q1 <- subset(housing, Date == 2001.25) 
+ggplot(hp2001Q1,
+       aes(y = Structure.Cost, x = Land.Value)) +
+  geom_point()
+#geom points requires mapping for x and y
+# y is Structure cost
+# x is land value
+```
+
+```{r}
+ggplot(hp2001Q1,
+       aes(y = Structure.Cost, x = log(Land.Value))) +
+  geom_point()
+#we've switched the x and y axes for this graph
+```
+
+## Lines (Predicion Lines)
+When I Knit it, his next line doesn't work for some reason, can't assign anything to dataset
+messes up the whole next section,
+worked when I first tried it
+removing the chunks to make the doc actually knit
+
+hp2001Q1$pred.SC <- predict(lm(Structure.Cost ~ log(Land.Value), data = hp2001Q1))
+#adding a column to the dataset, cost-value
+
+p1 <- ggplot(hp2001Q1, aes(x = log(Land.Value), y = Structure.Cost))
+# creating p1, from the dataset, with x as land, and y as structurecost,p1 +
+  geom_point(aes(color = Home.Value)) +
+  geom_smooth()
+
+p1 + geom_point(aes(color = Home.Value)) +
+  geom_line(aes(y = pred.SC))
+#geometric points, assign color based on home value
+# assigning the prediction line to the scatterplot
+
+
+
+## Smoothers
+```{r}
+p1 <- ggplot(hp2001Q1, aes(x = log(Land.Value), y = Structure.Cost))
+p1 +
+  geom_point(aes(color = Home.Value)) +
+  geom_smooth()
+# making a smooth line, rather than a straight one
+```
+
+## Text (Label Points)
+```{r}
+p1 + 
+  geom_text(aes(label=State), size = 3)
+#same thing as above, no prediction line,
+#labels it according to state
+```
+```{r}
+## install.packages("ggrepel") 
+library("ggrepel")
+p1 + 
+  geom_point() + 
+  geom_text_repel(aes(label=State), size = 3)
+#uses ggrepel to make the labels not crowd eachother
+#also gives the dot and the label, not just the label
+```
+
+```{r}
+#filesare mapped to aesthetics with aes() function, whereas fixed aesthetics are set outside the aes() call
+
+p1 +
+  geom_point(aes(size = 2),# incorrect! 2 is not a variable
+             color="red") # this is fine -- all points red
+
+```
+
+
+## Mapping variables to other aesthetics
+
+```{r}
+p1 +
+  geom_point(aes(color=Home.Value, shape = region))
+#map other aesthetics the same way as x and y in the previous example
+```
+
+## Exercise I
+#### I.1 scatterplot with CPI on x axis, HDI on y axis
+```{r}
+dat <- read.csv("Rgraphics/dataSets/EconomistData.csv")
+
+ggplot(dat, aes(x = CPI, y = HDI)) + geom_point()
+```
+####I.2 color the points blue
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI)) + geom_point(color = "blue")
+```
+##### I.3 map the color to the region
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI, color)) + geom_point()
+```
+```{r}
+unique(dat$Region)
+```
+
+
+##### I.4 make points bigger by setting size to 2
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI, color = Region)) + geom_point(size=2)
+```
+##### I.5 Map point to HDI.Rank
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI, color = Region, size = HDI.Rank)) + geom_point()
+```
+```{r}
+args(geom_histogram)
+args(stat_bin)
+```
+```{r}
+p2 <- ggplot(housing, aes(x = Home.Value))
+p2 + geom_histogram()
+```
+```{r}
+p2 + geom_histogram(stat = "bin", binwidth = 4000)
+```
+```{r}
+housing.sum <- aggregate(housing["Home.Value"], housing["State"], FUN=mean)
+rbind(head(housing.sum), tail(housing.sum))
+```
+```{r}
+ggplot(housing.sum, aes(x=State, y=Home.Value)) + geom_bar(stat ="identity")
+```
+## Exercise II
+II.
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI)) + geom_point()
+```
+II.2
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI)) + geom_point() + geom_smooth()
+```
+II.3
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI)) + geom_point() + geom_smooth(method = lm)
+```
+II.4
+```{r}
+ggplot(dat, aes(x = CPI, y = HDI)) + geom_point() + geom_line(stat = "ecdf")
+```
+```{r}
+p3 <- ggplot(housing,
+             aes(x = State,
+                 y = Home.Price.Index)) + 
+        theme(legend.position="top",
+              axis.text=element_text(size = 6))
+(p4 <- p3 + geom_point(aes(color = Date),
+                       alpha = 0.5,
+                       size = 1.5,
+                       position = position_jitter(width = 0.25, height = 0)))
+#makes the p4 object which is p3 plus the points passed, makes color a scale according to Date
+#puts in position jitter for somereason
+
+```
+```{r}
+p4 + scale_x_discrete(name="State Abbreviation") +
+  scale_color_continuous(name="",
+                         breaks = c(1976, 1994, 2013),
+                         labels = c("'76", "'94", "'13"))
+#modifies the key to be broken up by the appropriate numbers
+```
+```{r}
+p4 +
+  scale_x_discrete(name="State Abbreviation") +
+  scale_color_continuous(name="",
+                         breaks = c(1976, 1994, 2013),
+                         labels = c("'76", "'94", "'13"),
+                         low = "blue", high = "red")
+```
+```{r}
+p4 +
+  scale_color_gradient2(name="",
+                        breaks = c(1976, 1994, 2013),
+                        labels = c("'76", "'94", "'13"),
+                        low = "blue",
+                        high = "red",
+                        mid = "gray60",
+                        midpoint = 1994)
+#note that muted() doesn't seem to exist so I got rid of it
+```
+## Exercise III
+III.1
+```{r}
+ExPlot <- ggplot(dat, aes(x = CPI, y = HDI), scale_y_continuous("Human Development Index")) + geom_point(aes(color= Region))
+ExPlot
+```
+III.2
+```{r}
+Explot2 <- ExPlot + scale_x_continuous(name = "Corruption perception index") + scale_y_continuous(name= "Human development index") + scale_fill_manual(name= "Region", breaks= c("Americas", "Asia Pacific", "East EU Cemt Asia", "EU W. Europe", "MENA", "SSA"), labels = c("1", "2", "3", "4", "5", "6"))
+#this should relabel the labels but does not for some reason, I've tried this several times
+Explot2
+```
+
+```{r}
+?scale_color_manual
+ExPlot <- ggplot(dat, aes(x = CPI, y = HDI), scale_y_continuous("Human Development Index")) + geom_point(aes(color= Region))
+cols <- c("deepskyblue1", "cyan", "cyan4", "dodgerblue4", "red1", "firebrick4")
+Explot3 <- Explot2 + scale_color_manual(values = cols)
+Explot3
+```
+```{r}
+p5 <- ggplot(housing, aes(x = Date, y = Home.Value))
+p5 + geom_line(aes(color = State))
+```
+```{r}
+(p5 <- p5 + geom_line() +
+   facet_wrap(~State, ncol = 10))
+```
+
+```{r}
+p5 + theme_linedraw()
+```
+```{r}
+p5 + theme_linedraw()
+```
+```{r}
+p5 + theme_minimal() +
+  theme(text = element_text(color = "turquoise"))
+```
+
+```{r}
+theme_new <- theme_bw() +
+  theme(plot.background = element_rect(size = 1, color = "blue", fill = "black"),
+        text=element_text(size = 12, family = "Serif", color = "ivory"),
+        axis.text.y = element_text(colour = "purple"),
+        axis.text.x = element_text(colour = "red"),
+        panel.background = element_rect(fill = "pink"),
+        strip.background = element_rect(fill = "orange"))
+
+p5 + theme_new
+```
+
+```{r}
+#wrong way to plot diff varaibles with diff colors
+housing.byyear <- aggregate(cbind(Home.Value, Land.Value) ~ Date, data = housing, mean)
+ggplot(housing.byyear,
+       aes(x=Date)) +
+  geom_line(aes(y=Home.Value), color="red") +
+  geom_line(aes(y=Land.Value), color="blue")
+
+```
+
+```{r}
+#right way to do it
+library(tidyr)
+home.land.byyear <- gather(housing.byyear,
+                           value = "value",
+                           key = "type",
+                           Home.Value, Land.Value)
+ggplot(home.land.byyear,
+       aes(x=Date,
+           y=value,
+           color=type)) +
+  geom_line()
+```
+
+#Challenge to recreate Econ Graph
+```{r}
+dat <- read.csv("Rgraphics/dataSets/EconomistData.csv")
+#puts a red trendline on the graph
+Econgraph <- ggplot(dat, aes(x = CPI, y = HDI)) + geom_point() + geom_smooth(method = "lm", formula = y~ poly(x,2), color="red")
+```
+```{r}
+# let's add axis labels
+Econgraph2 <- Econgraph + scale_x_continuous(breaks =seq(0,10) , name = "Corruption perception index") + scale_y_continuous(name= "Human development index")
+
+```
+
+```{r}
+#add some color
+cols <- c("deepskyblue1", "cyan", "cyan4", "dodgerblue4", "red1", "firebrick4")
+#defines the color vector
+Econgraph3 <-Econgraph2 + geom_point(aes(color= Region, shape =1), shape = 1, fill=NA) + scale_color_manual(values = cols) +theme_bw() + theme(legend.position = "top", legend.direction = "horizontal", panel.grid.major.x =  element_blank(), panel.grid.minor.x = element_blank())
+#added color
+#put legend on top of the grid
+# changed the shape of the object
+
+```
+```{r}
+library("ggrepel")
+
+Nations_of_interest <- c("Congo","Afghanistan", "Sudan", "Myanmar", "Iraq", "Venezula", "Russia", "India", "Argentina", "Greece", "Brazil", "Italy", "China", "South Africa", "Rwanda", "Bhutan", "Cape Verde", "Botswana", "Spain", "France", "US", "Britain","Barbados", "Germany", "Japan", "Norway", "Singapore", "New Zealand")
+
+#then need to subset the data based on the presence of these words in the Country category
+subset_of_interest <- dat[dat$Country %in% Nations_of_interest,]
+
+```
+
+```{r}
+Econgraph4 <- Econgraph3 + geom_text_repel(data = subset_of_interest, aes(label=Country), size =3)+ scale_fill_manual(name= "Region", breaks= c("Americas", "Asia Pacific", "East EU Cemt Asia", "EU W. Europe", "MENA", "SSA"), labels = c("OECD", "Americas", "Asia & Oceania", "Central & Eastern Europe", "Middle East & north Africa", "Sub-Saharan Africa"))
+
+#for somereason it gives the correct result but quickly boots it off afterwards, it si aggravating
+#also the breaks and names don't work
+Econgraph4
+```
+```{r}
+```
+
+
